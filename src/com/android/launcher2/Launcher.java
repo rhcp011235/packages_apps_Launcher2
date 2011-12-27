@@ -251,6 +251,8 @@ public final class Launcher extends Activity
 
     private BubbleTextView mWaitingForResume;
 
+    private boolean mShowSearchBar;
+    private boolean mAutoRotate;
     private Runnable mBuildLayersRunnable = new Runnable() {
         public void run() {
             if (mWorkspace != null) {
@@ -283,6 +285,9 @@ public final class Launcher extends Activity
         mAppWidgetManager = AppWidgetManager.getInstance(this);
         mAppWidgetHost = new LauncherAppWidgetHost(this, APPWIDGET_HOST_ID);
         mAppWidgetHost.startListening();
+
+        mShowSearchBar = PreferencesProvider.getShowSearchBar(this);
+        mAutoRotate = PreferencesProvider.getAutoRotate(this);
 
         if (PROFILE_STARTUP) {
             android.os.Debug.startMethodTracing(
@@ -353,6 +358,10 @@ public final class Launcher extends Activity
         if (LauncherApplication.isScreenLarge() || Build.TYPE.contentEquals("eng")) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         }
+    }
+
+    public int getCurrentOrientation() {
+        return getResources().getConfiguration().orientation;
     }
 
     private void checkForLocaleChange() {
@@ -552,12 +561,15 @@ public final class Launcher extends Activity
     @Override
     protected void onResume() {
         super.onResume();
-        if (Preferences.getInstance().getOrientate()) {
+        mPaused = false;
+        if (preferencesChanged()) {
+            android.os.Process.killProcess(android.os.Process.myPid());
+        }
+        if (mAutoRotate) {
             this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
         } else {
             this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
         }
-        mPaused = false;
         if (mRestoring || mOnResumeNeedsLoad) {
             mWorkspaceLoading = true;
             mModel.startLoader(this, true);
@@ -775,6 +787,9 @@ public final class Launcher extends Activity
 
         // Get the search/delete bar
         mSearchDropTargetBar = (SearchDropTargetBar) mDragLayer.findViewById(R.id.qsb_bar);
+        if (!mShowSearchBar && getCurrentOrientation() == Configuration.ORIENTATION_LANDSCAPE) {
+            ((View) findViewById(R.id.qsb_divider)).setVisibility(View.GONE);
+        }
 
         // Setup AppsCustomize
         mAppsCustomizeTabHost = (AppsCustomizeTabHost)
@@ -2575,7 +2590,7 @@ public final class Launcher extends Activity
     /** Maps the current orientation to an index for referencing orientation correct global icons */
     private int getCurrentOrientationIndexForGlobalIcons() {
         // default - 0, landscape - 1
-        switch (getResources().getConfiguration().orientation) {
+        switch (getCurrentOrientation()) {
         case Configuration.ORIENTATION_LANDSCAPE:
             return 1;
         default:
@@ -3188,7 +3203,6 @@ public final class Launcher extends Activity
     }
 
     /* Cling related */
-    private static final String PREFS_KEY = "com.android.launcher2.prefs";
     private boolean isClingsEnabled() {
         // disable clings when running in a test harness
         if(ActivityManager.isRunningInTestHarness()) return false;
@@ -3225,7 +3239,7 @@ public final class Launcher extends Activity
                     cling.setVisibility(View.GONE);
                     cling.cleanup();
                     SharedPreferences prefs =
-                        getSharedPreferences("com.android.launcher2.prefs", Context.MODE_PRIVATE);
+                        getSharedPreferences(PreferencesProvider.PREFERENCES_KEY, Context.MODE_PRIVATE);
                     SharedPreferences.Editor editor = prefs.edit();
                     editor.putBoolean(flag, true);
                     editor.commit();
@@ -3249,7 +3263,7 @@ public final class Launcher extends Activity
     public void showFirstRunWorkspaceCling() {
         // Enable the clings only if they have not been dismissed before
         SharedPreferences prefs =
-            getSharedPreferences(PREFS_KEY, Context.MODE_PRIVATE);
+            getSharedPreferences(PreferencesProvider.PREFERENCES_KEY, Context.MODE_PRIVATE);
         if (isClingsEnabled() && !prefs.getBoolean(Cling.WORKSPACE_CLING_DISMISSED_KEY, false)) {
             initCling(R.id.workspace_cling, null, false, 0);
         } else {
@@ -3259,7 +3273,7 @@ public final class Launcher extends Activity
     public void showFirstRunAllAppsCling(int[] position) {
         // Enable the clings only if they have not been dismissed before
         SharedPreferences prefs =
-            getSharedPreferences(PREFS_KEY, Context.MODE_PRIVATE);
+            getSharedPreferences(PreferencesProvider.PREFERENCES_KEY, Context.MODE_PRIVATE);
         if (isClingsEnabled() && !prefs.getBoolean(Cling.ALLAPPS_CLING_DISMISSED_KEY, false)) {
             initCling(R.id.all_apps_cling, position, true, 0);
         } else {
@@ -3269,7 +3283,7 @@ public final class Launcher extends Activity
     public Cling showFirstRunFoldersCling() {
         // Enable the clings only if they have not been dismissed before
         SharedPreferences prefs =
-            getSharedPreferences(PREFS_KEY, Context.MODE_PRIVATE);
+            getSharedPreferences(PreferencesProvider.PREFERENCES_KEY, Context.MODE_PRIVATE);
         Cling cling = null;
         if (isClingsEnabled() && !prefs.getBoolean(Cling.FOLDER_CLING_DISMISSED_KEY, false)) {
             cling = initCling(R.id.folder_cling, null, true, 0);
@@ -3325,6 +3339,17 @@ public final class Launcher extends Activity
         for (int i = 0; i < sDumpLogs.size(); i++) {
             writer.println("  " + sDumpLogs.get(i));
         }
+    }
+
+    public boolean preferencesChanged() {
+        SharedPreferences prefs = getSharedPreferences(PreferencesProvider.PREFERENCES_KEY, Context.MODE_PRIVATE);
+        boolean preferencesChanged = prefs.getBoolean(PreferencesProvider.PREFERENCES_CHANGED, false);
+        if (preferencesChanged) {
+            SharedPreferences.Editor editor = prefs.edit();
+                editor.putBoolean(PreferencesProvider.PREFERENCES_CHANGED, false);
+                editor.commit();
+        }
+        return preferencesChanged;
     }
 }
 

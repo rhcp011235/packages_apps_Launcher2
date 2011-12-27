@@ -2,31 +2,24 @@ package com.android.launcher2;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
+import android.os.Bundle;
+import android.preference.PreferenceActivity;
 
-public class Preferences {
+import com.android.launcher.R;
 
-    private static Preferences _Current = null;
+public class Preferences extends PreferenceActivity {
 
-    public static Preferences getInstance() {
-        if (_Current == null)
-            _Current = new Preferences();
-        return _Current;
-    }
+    private static final String TAG = "Launcher.Preferences";
 
-    private SharedPreferences mPreferences = null;
+     @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        addPreferencesFromResource(R.xml.settings);
 
-    public void setContext(Context context) {
-        if (context == null && mPreferences != null) {
-            mPreferences = null;
-        } else if (context != null) {
-            mPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-        }
-    }
-
-    static final String AUTO_ROTATE_LAUNCHER = "auto_rotate_launcher";
-    
-    public boolean getOrientate() {
-        return mPreferences.getBoolean(AUTO_ROTATE_LAUNCHER, true);
+        SharedPreferences prefs =
+            getSharedPreferences(PreferencesProvider.PREFERENCES_KEY, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+                editor.putBoolean(PreferencesProvider.PREFERENCES_CHANGED, true);
+                editor.commit();
     }
 }

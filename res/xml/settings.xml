@@ -5,8 +5,13 @@
     android:key="launcher_preferences">
 
     <CheckBoxPreference
-        android:key="auto_rotate_launcher"
+        android:key="auto_rotate"
         android:title="@string/auto_rotate_launcher_title"
+        android:defaultValue="true"/>
+
+    <CheckBoxPreference
+        android:key="show_search_bar"
+        android:title="@string/show_search_bar_title"
         android:defaultValue="true"/>
 
 </PreferenceScreen>

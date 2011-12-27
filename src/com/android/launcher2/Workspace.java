@@ -34,6 +34,7 @@ import android.content.ClipDescription;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
@@ -65,6 +66,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.launcher.R;
+import com.android.launcher2.PreferencesProvider;
 import com.android.launcher2.FolderIcon.FolderRingAnimator;
 import com.android.launcher2.InstallWidgetReceiver.WidgetMimeTypeHandlerData;
 
@@ -237,6 +239,8 @@ public class Workspace extends SmoothPagedView
     private float[] mNewRotationYs;
     private float mTransitionProgress;
 
+    private boolean mShowSearchBar;
+
     /**
      * Used to inflate the Workspace from XML.
      *
@@ -308,6 +312,7 @@ public class Workspace extends SmoothPagedView
         LauncherModel.updateWorkspaceLayoutCells(cellCountX, cellCountY);
         setHapticFeedbackEnabled(false);
 
+        mShowSearchBar = PreferencesProvider.getShowSearchBar(context);
         mLauncher = (Launcher) context;
         initWorkspace();
 
@@ -387,11 +392,20 @@ public class Workspace extends SmoothPagedView
         setWillNotDraw(false);
         setChildrenDrawnWithCacheEnabled(true);
 
+        final Resources res = getResources();
+
         try {
-            final Resources res = getResources();
             mBackground = res.getDrawable(R.drawable.apps_customize_bg);
         } catch (Resources.NotFoundException e) {
             // In this case, we will skip drawing background protection
+        }
+
+        if (!mShowSearchBar) {
+            int paddingTop = 0;
+            if (mLauncher.getCurrentOrientation() == Configuration.ORIENTATION_PORTRAIT) {
+                paddingTop = (int)res.getDimension(R.dimen.qsb_bar_hidden_inset);
+            }
+            setPadding(0, paddingTop, getPaddingRight(), getPaddingBottom());
         }
 
         mChangeStateAnimationListener = new AnimatorListenerAdapter() {
