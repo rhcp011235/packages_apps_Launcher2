@@ -254,4 +254,6 @@ s -->
     <string name="launcher_settings_title">Launcher settings</string>
     <!-- Preference title for launcher orientation -->
     <string name="auto_rotate_launcher_title">Auto-rotate launcher</string>
+    <!-- Preference title for search bar visibility -->
+    <string name="show_search_bar_title">Show search bar</string>
 </resources>

@@ -93,7 +93,7 @@
                 android:resource="@xml/wallpaper_picker_preview" />
         </activity>
 
-        <activity android:name="com.android.launcher2.SettingsActivity">
+        <activity android:name="com.android.launcher2.Preferences" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
