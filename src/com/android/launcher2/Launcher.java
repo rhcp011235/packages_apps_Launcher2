@@ -132,6 +132,7 @@ public final class Launcher extends Activity
 
     static final String EXTRA_SHORTCUT_DUPLICATE = "duplicate";
 
+    // Setup 8 screens default. Thanks adrynalyne for showing me where this is.
     static final int SCREEN_COUNT = 8;
     static final int DEFAULT_SCREEN = 2;
 
